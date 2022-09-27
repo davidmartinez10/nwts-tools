@@ -47,4 +47,4 @@ import path from "nwts-tools/node/path";
 
 Check out this `Solid.js` project starter that takes full advantage of `NW.ts-Tools` features:
 
-[NW.ts Solid Starter](https://github.com/davidmartinez10/nwts-starter.git)
+[NW.ts Solid Starter](https://github.com/davidmartinez10/nwts-solid-starter.git)
