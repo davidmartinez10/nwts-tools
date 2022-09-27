@@ -11,8 +11,6 @@ import { get_nwjs_path } from "../nwjs-path.mjs";
 
 const ignore = () => undefined;
 
-if (process.env.PACKAGE_TYPE !== "zip") process.env.PACKAGE_TYPE = "normal";
-
 async function make_package() {
   const temp_folder = await fs.promises.mkdtemp(path.join(os.tmpdir(), "build-"));
 
@@ -23,7 +21,8 @@ async function make_package() {
   );
 
   let { displayName, dependencies, devDependencies } = JSON.parse(String(await fs.promises.readFile(path.join(process.cwd(), "package.json"))));
-  displayName.replace(" ", "🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦");
+  const preserve_spaces = `🇺🇦${Number.MAX_SAFE_INTEGER}🇺🇦`;
+  displayName.replace(" ", preserve_spaces);
 
   const nw = dependencies?.nw || devDependencies?.nw;
 
@@ -44,40 +43,43 @@ async function make_package() {
         `Robocopy "${win_path.join(temp_folder, "node_modules/nw/nwjs")}" "${dist_directory}" *.* /E`
       );
 
-      switch (process.env.PACKAGE_TYPE) {
+      if (process.env.PACKAGE_TYPE === "zip") {
+        commands.push(`cd "${build_directory}" && powershell Compress-Archive ".\\*" "${temp_folder}\\package.zip"`);
+        commands.push(`cd "${dist_directory}" && mv "${win_path.join(temp_folder, "package.zip")}" ./package.nw`);
 
-        case "normal":
-          commands.push(`Robocopy "${build_directory}" "${dist_directory}" *.* /E`);
-          break;
-
-        case "zip":
-          commands.push(`cd "${build_directory}" && powershell Compress-Archive ".\\*" "${temp_folder}\\package.zip"`);
-          commands.push(`cd "${dist_directory}" && mv "${win_path.join(temp_folder, "package.zip")}" ./package.nw`);
-          commands.push(`cd "${dist_directory}" && cmd /C="copy /b '${dist_directory}\\nw.exe'+'${dist_directory}\\package.nw' '${dist_directory}\\app.exe'" && rm nw.exe && rm package.nw`);
-          break;
+        // Too ambitious right now:
+        // commands.push(`cd "${dist_directory}" && cmd /C="copy /b '${dist_directory}\\nw.exe'+'${dist_directory}\\package.nw' '${dist_directory}\\app.exe'" && rm nw.exe && rm package.nw`);
+      } else {
+        commands.push(`Robocopy "${build_directory}" "${dist_directory}" *.* /E`);
       }
+
       break;
     }
 
     case "darwin": {
       commands.push(`cp -R "${temp_folder}/node_modules/nw/nwjs/nwjs.app" "./dist/${displayName}.app"`);
 
-      switch (process.env.PACKAGE_TYPE) {
-
-        case "normal":
-          commands.push(`cp -R "./${build_directory}" "./dist/${displayName}.app/Contents/Resources/app.nw"`);
-          break;
-
-        case "zip":
-          commands.push(`cd "${build_directory}" && zip -r "${`../dist/${displayName}.app/Contents/Resources/app.nw`}" .`);
-          break;
+      if (process.env.PACKAGE_TYPE === "zip") {
+        commands.push(`cd "${build_directory}" && zip -r "${`../dist/${displayName}.app/Contents/Resources/app.nw`}" .`);
+      } else {
+        commands.push(`cp -R "./${build_directory}" "./dist/${displayName}.app/Contents/Resources/app.nw"`);
       }
+
       break;
     }
 
     case "linux": {
       commands.push(`cp -R "${temp_folder}/node_modules/nw/nwjs" "./dist/${displayName}"`);
-      commands.push(`cp -R "./${build_directory}" "./dist/${displayName}/package.nw"`);
+
+      if (process.env.PACKAGE_TYPE === "zip") {
+        commands.push(`cd "${build_directory}" && zip -r "${`../dist/${displayName}/package.nw`}" .`);
+
+        // Too ambitious right now:
+        // commands.push(`cd "./dist/${displayName}" && cat nw package.nw > app && chmod +x app`);
+      } else {
+        commands.push(`cp -R "./${build_directory}" "./dist/${displayName}/package.nw"`);
+      }
+
       break;
     }
   }
@@ -86,7 +88,7 @@ async function make_package() {
     const arr = command.split(" ");
     const cmd = arr.shift() || "";
     const args = arr.map(function map(element) {
-      return element.replace("🇺🇦🇺🇦🇺🇦🇺🇦🇺🇦", "\\ ");
+      return element.replace(preserve_spaces, "\\ ");
     });
 
     child_process.spawnSync(cmd, args, {
