@@ -1,0 +1,3 @@
+import type * as node_dns from "node:dns";
+
+export default require("node:dns") as typeof node_dns;

@@ -1,0 +1,38 @@
+{
+  "name": "nwts-tools",
+  "version": "0.0.1",
+  "author": "David Martínez",
+  "bin": {
+    "nwts-package": "bin/package.mjs",
+    "nwts-patch-codecs": "bin/patch-codecs.mjs",
+    "nwts-run": "bin/run.mjs"
+  },
+  "scripts": {
+    "version": "git add -A",
+    "postversion": "git push && git push --tags"
+  },
+  "dependencies": {
+    "got": "^12.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.7.18",
+    "typescript": "^4.8.3"
+  },
+  "description": "Tools for running, patching, and packaging NW.js apps.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davidmartinez10/nwts-tools.git"
+  },
+  "keywords": [
+    "nwjs",
+    "nw.js",
+    "typescript",
+    "desktop"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/davidmartinez10/nwts-tools/issues"
+  },
+  "homepage": "https://github.com/davidmartinez10/nwts-tools#readme",
+  "types": "types/index.d.ts"
+}
