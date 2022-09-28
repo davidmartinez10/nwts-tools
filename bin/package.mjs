@@ -31,7 +31,15 @@ async function make_package() {
 
   await promisify(child_process.exec)(`cd ${temp_folder} && npm install nw@${version}`);
 
-  if (process.env.NWJS_FFMPEG === "PATCH") await patch_nwjs_codecs(await get_nwjs_path());
+  if (process.env.NWJS_FFMPEG === "PATCH") {
+    const { findpath } = await import(
+      os.platform() === "win32"
+        ? `file:///${path.join(temp_folder, "node_modules/nw/index.js")}`
+        : path.join(temp_folder, "node_modules/nw/index.js")
+    );
+
+    await patch_nwjs_codecs(findpath());
+  }
 
   const commands = ["mkdir dist"];
 
