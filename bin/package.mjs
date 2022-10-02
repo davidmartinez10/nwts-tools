@@ -7,7 +7,6 @@ import win_path from "node:path/win32";
 import os from "node:os";
 
 import { patch_nwjs_codecs } from "../patch-nwjs-codecs.mjs";
-import { get_nwjs_path } from "../nwjs-path.mjs";
 
 const ignore = () => undefined;
 

@@ -85,7 +85,7 @@ export interface NWJSManifest {
     width?: number;
     height?: number;
     icon?: string;
-    position?: "center" | "mouse" | null;
+    position?: "center" | "mouse";
     min_width?: number;
     min_height?: number;
     max_width?: number;
