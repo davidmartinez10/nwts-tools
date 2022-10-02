@@ -45,6 +45,15 @@ import os from "nwts-tools/node/os";
 import path from "nwts-tools/node/path";
 ```
 
+# Dependencies
+## Windows
+- `Powershell`
+## MacOS and Linux
+- `zip`, required for `nwts-package` when `PACKAGE_TYPE` is set to `zip`.
+- `unzip`, required for `nwts-patch-codecs` and for `nwts-package` when `NWJS_FFMPEG` is set to `PATCH`.
+
+---
+
 Check out this `Solid.js` project starter that takes full advantage of `NW.ts-Tools` features:
 
 [NW.ts Solid Starter](https://github.com/davidmartinez10/nwts-solid-starter.git)
