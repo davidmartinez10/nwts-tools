@@ -7,6 +7,8 @@ import os from "os";
 
 import got from "got";
 
+const ignore = () => undefined;
+
 // IMPORTANT: Take a look at https://www.ffmpeg.org/legal.html.
 export async function patch_nwjs_codecs(nw_path = "") {
   const { dependencies, devDependencies } = JSON.parse(
@@ -21,7 +23,7 @@ export async function patch_nwjs_codecs(nw_path = "") {
   );
 
   const temp_folder = await fs.promises.mkdtemp(
-    path.join(os.tmpdir(), "ffmpeg-")
+    path.join(os.tmpdir(), "nwjs-ffmpeg-")
   );
 
   const ffmpeg_zip = path.join(temp_folder, "ffmpeg.zip");
@@ -45,4 +47,6 @@ export async function patch_nwjs_codecs(nw_path = "") {
       ? `powershell Expand-Archive ${ffmpeg_zip} -DestinationPath ${nw_path}`
       : `unzip -o ${JSON.stringify(ffmpeg_zip)} -d ${JSON.stringify(nw_path)}`
   );
+
+  await fs.promises.unlink(temp_folder).catch(ignore);
 }

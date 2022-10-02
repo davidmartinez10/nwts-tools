@@ -24,11 +24,11 @@ async function make_package() {
   displayName.replace(" ", preserve_spaces);
 
   const nw = dependencies?.nw || devDependencies?.nw;
-
-  await fs.promises.writeFile(`${temp_folder}/package.json`, JSON.stringify({}), { encoding: "utf8" });
   const version = process.env.NWJS_VERSION || nw.replace("-sdk", "");
 
-  await promisify(child_process.exec)(`cd ${temp_folder} && npm install nw@${version}`);
+  await fs.promises.writeFile(path.join(temp_folder, "package.json"), JSON.stringify({}), { encoding: "utf8" });
+
+  await promisify(child_process.exec)(`npm install nw@${version}`, { "cwd": temp_folder });
 
   if (process.env.NWJS_FFMPEG === "PATCH") {
     const { findpath } = await import(
@@ -46,16 +46,18 @@ async function make_package() {
 
     case "win32": {
       const dist_directory = win_path.join("./dist", displayName);
-      commands.push(
-        `Robocopy "${win_path.join(temp_folder, "node_modules/nw/nwjs")}" "${dist_directory}" *.* /E`
-      );
+
+      commands.push(`Robocopy "${win_path.join(temp_folder, "node_modules/nw/nwjs")}" "${dist_directory}" *.* /E /MOVE`);
 
       if (process.env.PACKAGE_TYPE === "zip") {
-        commands.push(`cd "${build_directory}" && powershell Compress-Archive ".\\*" "${temp_folder}\\package.zip"`);
-        commands.push(`cd "${dist_directory}" && mv "${win_path.join(temp_folder, "package.zip")}" ./package.nw`);
+        const nw = win_path.join(dist_directory, "nw.exe");
+        const package_nw = win_path.join(dist_directory, "package.nw");
+        const package_zip = win_path.join(temp_folder, "package.zip");
 
-        // Too ambitious right now:
-        // commands.push(`cd "${dist_directory}" && cmd /C="copy /b '${dist_directory}\\nw.exe'+'${dist_directory}\\package.nw' '${dist_directory}\\app.exe'" && rm nw.exe && rm package.nw`);
+        commands.push(`cd "${build_directory}" && powershell Compress-Archive ".\\*" "${package_zip}"`);
+        commands.push(`move "${package_zip}" "${package_nw}"`);
+        commands.push(`copy /b "${nw}"+"${package_nw}" "${win_path.join(dist_directory, `${displayName}.exe`)}"`);
+        commands.push(`del "${nw}" "${package_nw}"`);
       } else {
         commands.push(`Robocopy "${build_directory}" "${dist_directory}" *.* /E`);
       }
@@ -80,9 +82,8 @@ async function make_package() {
 
       if (process.env.PACKAGE_TYPE === "zip") {
         commands.push(`cd "${build_directory}" && zip -r "${`../dist/${displayName}/package.nw`}" .`);
-
-        // Too ambitious right now:
-        // commands.push(`cd "./dist/${displayName}" && cat nw package.nw > app && chmod +x app`);
+        commands.push(`cd "./dist/${displayName}" && cat nw package.nw > "${displayName}" && chmod +x "${displayName}"`);
+        commands.push(`cd "./dist/${displayName}" && rm nw package.nw`);
       } else {
         commands.push(`cp -R "./${build_directory}" "./dist/${displayName}/package.nw"`);
       }
