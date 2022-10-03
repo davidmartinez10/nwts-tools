@@ -4,9 +4,9 @@ A toolkit for running, patching and packaging NW.js apps.
 ## Usage
 ```bash
 # Add NW.ts-Tools as a dependency.
-# This package relies on your project having "nw" as a dependency.
 npm i -D nwts-tools
 ```
+You should also have `nw` installed as a **devDependency**.
 
 ### patch-codecs
 Replaces the `FFmpeg` library originally included with `NW.js`. Credits to [nwjs-ffmpeg-prebuilt](https://github.com/nwjs-ffmpeg-prebuilt/nwjs-ffmpeg-prebuilt) for the prebuilt binaries. Use this patch only for free and open-source projects. Licensing restrictions apply for closed-source software.
@@ -18,7 +18,7 @@ npx nwts-patch-codecs
 ```
 
 ### package
-This script downloads a fresh copy from `nw` (the same version as you specified in your `package.json` minus `-sdk`) and packages it alongside your already built application.
+This script downloads a fresh copy from `nw` (the same version as you specified in your `package.json` minus `-sdk`) and packages it alongside your already built application. It also bundles the dependencies listed in your `package.json`(devDependencies not included).
 ```bash
 # Run from your project's root directory:
 npx nwts-package
