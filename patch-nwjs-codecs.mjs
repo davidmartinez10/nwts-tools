@@ -10,7 +10,11 @@ import got from "got";
 const ignore = () => undefined;
 
 // IMPORTANT: Take a look at https://www.ffmpeg.org/legal.html.
-export async function patch_nwjs_codecs(nw_path = "") {
+
+/**
+ * @param {string} nw_path
+ */
+export async function patch_nwjs_codecs(nw_path) {
   const { dependencies, devDependencies } = JSON.parse(
     String(await fs.promises.readFile(path.join(process.cwd(), "package.json")))
   );

@@ -1,5 +1,14 @@
 import { Permission } from "./shared";
 
+type Protocol = "http" | "https" | "tcp" | "udp" | "ws" | string;
+type Subdomain = string;
+type Domain = "localhost" | string;
+type TLD = "com" | "net" | "org" | string;
+type Hostname = Domain | `${Subdomain}.${Domain}.${TLD}` | `${Domain}.${TLD}`;
+type Host = `${Protocol}://${Hostname}` | `${Protocol}://${Hostname}:${number}`;
+type Location = Host | `${Host}/${string}`
+type URLLike = Location | "<all_urls>" | string;
+
 export type Permission =
   "activeTab" |
   "alarms" |
@@ -106,9 +115,9 @@ export interface NWJSManifest {
     plugin?: boolean;
   },
   "user-agent"?: string;
-  "node-remote"?: string | string[];
+  "node-remote"?: URLLike | URLLike[];
   "chromium-args"?: string;
-  crash_report_url?: string;
+  crash_report_url?: URLLike;
   "js-flags"?: string;
   inject_js_start?: string;
   inject_js_end?: string;
