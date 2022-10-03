@@ -7,7 +7,31 @@ import os from "node:os";
 
 import { patch_nwjs_codecs } from "../patch-nwjs-codecs.mjs";
 
+const preserve_spaces = `🇺🇦${Number.MAX_SAFE_INTEGER}🇺🇦`;
 const ignore = () => undefined;
+
+/**
+ * @param {string} command
+ * @param {import("node:child_process").SpawnSyncOptions} [options]
+ */
+function run_cmd(command, options) {
+  const arr = command.split(" ");
+  const cmd = arr.shift() || "";
+  const args = arr.map(function callbackfn(element) {
+    return element.replace(preserve_spaces, "\\ ");
+  });
+
+  child_process.spawnSync(
+    cmd,
+    args,
+    Object.assign({
+      shell: true,
+      cwd: process.cwd(),
+      env: process.env,
+      stdio: "inherit",
+      encoding: "utf-8",
+    }, options));
+}
 
 async function make_package() {
   console.clear();
@@ -43,7 +67,6 @@ async function make_package() {
   console.info("Running on these settings:");
   console.table(config);
 
-  const preserve_spaces = `🇺🇦${Number.MAX_SAFE_INTEGER}🇺🇦`;
   displayName.replace(" ", preserve_spaces);
 
   // Fetch runtime dependencies
@@ -78,7 +101,7 @@ async function make_package() {
   const commands = [];
 
   if (!fs.existsSync(package_directory)) {
-    commands.push(`mkdir ${package_directory}`);
+    run_cmd(`mkdir ${package_directory}`);
   }
 
   switch (os.platform()) {
@@ -86,22 +109,10 @@ async function make_package() {
     case "win32": {
       const app_directory = win_path.join(".", package_directory, displayName);
 
-      commands.push(`Robocopy "${win_path.join(temp_folder, "node_modules/nw/nwjs")}" "${app_directory}" *.* /E /MOVE`);
+      run_cmd(`Robocopy "${win_path.join(temp_folder, "node_modules/nw/nwjs")}" "${app_directory}" *.* /E /MOVE`);
 
       if (has_runtime_deps) {
-        child_process.spawnSync("Robocopy", [
-          JSON.stringify(path.normalize(runtime_modules)),
-          JSON.stringify(path.join(build_directory, "node_modules")),
-          "*.*", "/E", "/MOVE"
-        ],
-          {
-            shell: true,
-            cwd: process.cwd(),
-            env: process.env,
-            stdio: "inherit",
-            encoding: "utf-8",
-          }
-        );
+        run_cmd(`Robocopy ${JSON.stringify(path.normalize(runtime_modules))} ${JSON.stringify(path.join(build_directory, "node_modules"))} *.* /E /MOVE`);
       }
 
       if (process.env.PACKAGE_TYPE === "zip") {
@@ -113,8 +124,8 @@ async function make_package() {
         for await (const item of await fs.promises.opendir(build_directory)) {
           if (item.isDirectory()) {
             const dirpath = win_path.join(build_directory, item.name);
-            commands.push(`powershell Compress-Archive "${dirpath}" "${dirpath}.zip"`);
-            commands.push(`powershell Remove-Item "${dirpath}" -Recurse`);
+            run_cmd(`powershell Compress-Archive "${dirpath}" "${dirpath}.zip"`);
+            run_cmd(`powershell Remove-Item "${dirpath}" -Recurse`);
             with_dirs = true;
           }
         }
@@ -161,62 +172,46 @@ async function make_package() {
           await fs.promises.writeFile(path.join(build_directory, "launcher.js"), script);
         }
 
-        commands.push(`cd "${build_directory}" && powershell Compress-Archive ".\\*" "${package_zip}"`);
-        commands.push(`move "${package_zip}" "${package_nw}"`);
-        commands.push(`copy /b "${nw}"+"${package_nw}" "${win_path.join(app_directory, `${displayName}.exe`)}"`);
-        commands.push(`del "${nw}" "${package_nw}"`);
+        run_cmd(`cd "${build_directory}" && powershell Compress-Archive ".\\*" "${package_zip}"`);
+        run_cmd(`move "${package_zip}" "${package_nw}"`);
+        run_cmd(`copy /b "${nw}"+"${package_nw}" "${win_path.join(app_directory, `${displayName}.exe`)}"`);
+        run_cmd(`del "${nw}" "${package_nw}"`);
       } else {
-        commands.push(`Robocopy "${build_directory}" "${app_directory}" *.* /E`);
+        run_cmd(`Robocopy "${build_directory}" "${app_directory}" *.* /E`);
       }
 
       break;
     }
 
     case "darwin": {
-      commands.push(`mv "${temp_folder}/node_modules/nw/nwjs/nwjs.app/" "./${package_directory}/${displayName}.app/"`);
-      if (has_runtime_deps) commands.push(`mv "${runtime_modules}/" "./${build_directory}/node_modules/"`);
+      run_cmd(`mv "${temp_folder}/node_modules/nw/nwjs/nwjs.app/" "./${package_directory}/${displayName}.app/"`);
+      if (has_runtime_deps) run_cmd(`mv "${runtime_modules}/" "./${build_directory}/node_modules/"`);
 
       const resources = `${package_directory}/${displayName}.app/Contents/Resources`;
 
       if (process.env.PACKAGE_TYPE === "zip") {
-        commands.push(`cd "${build_directory}" && zip -r "../${resources}/app.nw" .`);
+        run_cmd(`cd "${build_directory}" && zip -r "../${resources}/app.nw" .`);
       } else {
-        commands.push(`cp -R "./${build_directory}" "./${resources}/app.nw"`);
+        run_cmd(`cp -R "./${build_directory}" "./${resources}/app.nw"`);
       }
 
       break;
     }
 
     case "linux": {
-      commands.push(`mv "${temp_folder}/node_modules/nw/nwjs/" "./${package_directory}/${displayName}/"`);
-      if (has_runtime_deps) commands.push(`mv "${runtime_modules}/" "./${build_directory}/node_modules/"`);
+      run_cmd(`mv "${temp_folder}/node_modules/nw/nwjs/" "./${package_directory}/${displayName}/"`);
+      if (has_runtime_deps) run_cmd(`mv "${runtime_modules}/" "./${build_directory}/node_modules/"`);
 
       if (process.env.PACKAGE_TYPE === "zip") {
-        commands.push(`cd "${build_directory}" && zip -r "../${package_directory}/${displayName}/package.nw" .`);
-        commands.push(`cd "./${package_directory}/${displayName}" && cat nw package.nw > "${displayName}" && chmod +x "${displayName}"`);
-        commands.push(`cd "./${package_directory}/${displayName}" && rm nw package.nw`);
+        run_cmd(`cd "${build_directory}" && zip -r "../${package_directory}/${displayName}/package.nw" .`);
+        run_cmd(`cd "./${package_directory}/${displayName}" && cat nw package.nw > "${displayName}" && chmod +x "${displayName}"`);
+        run_cmd(`cd "./${package_directory}/${displayName}" && rm nw package.nw`);
       } else {
-        commands.push(`cp -R "./${build_directory}" "./${package_directory}/${displayName}/package.nw"`);
+        run_cmd(`cp -R "./${build_directory}" "./${package_directory}/${displayName}/package.nw"`);
       }
 
       break;
     }
-  }
-
-  for (const command of commands) {
-    const arr = command.split(" ");
-    const cmd = arr.shift() || "";
-    const args = arr.map(function map(element) {
-      return element.replace(preserve_spaces, "\\ ");
-    });
-
-    child_process.spawnSync(cmd, args, {
-      shell: true,
-      cwd: process.cwd(),
-      env: process.env,
-      stdio: "inherit",
-      encoding: "utf-8",
-    });
   }
 
   await fs.promises.unlink(temp_folder).catch(ignore);
