@@ -1,6 +1,6 @@
 {
   "name": "nwts-tools",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "David Martínez",
   "bin": {
     "nwts-package": "bin/package.mjs",
