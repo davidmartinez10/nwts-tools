@@ -37,6 +37,10 @@ async function make_package() {
   console.clear();
   console.info("nwts-package\n");
 
+  if (!["zip", "zip+exe"].includes(process.env.PACKAGE_TYPE || "")) {
+    process.env.PACKAGE_TYPE = "plain";
+  }
+
   const temp_folder = await fs.promises.mkdtemp(path.join(os.tmpdir(), "build-"));
 
   const build_directory = (
@@ -98,8 +102,6 @@ async function make_package() {
     await patch_nwjs_codecs(findpath());
   }
 
-  const commands = [];
-
   if (!fs.existsSync(package_directory)) {
     run_cmd(`mkdir ${package_directory}`);
   }
@@ -115,7 +117,9 @@ async function make_package() {
         run_cmd(`Robocopy ${JSON.stringify(path.normalize(runtime_modules))} ${JSON.stringify(path.join(build_directory, "node_modules"))} *.* /E /MOVE`);
       }
 
-      if (process.env.PACKAGE_TYPE === "zip") {
+      if (process.env.PACKAGE_TYPE === "plain") {
+        run_cmd(`Robocopy "${build_directory}" "${app_directory}" *.* /E`);
+      } else {
         const nw = win_path.join(app_directory, "nw.exe");
         const package_nw = win_path.join(app_directory, "package.nw");
         const package_zip = win_path.join(temp_folder, "package.zip");
@@ -174,10 +178,11 @@ async function make_package() {
 
         run_cmd(`cd "${build_directory}" && powershell Compress-Archive ".\\*" "${package_zip}"`);
         run_cmd(`move "${package_zip}" "${package_nw}"`);
-        run_cmd(`copy /b "${nw}"+"${package_nw}" "${win_path.join(app_directory, `${displayName}.exe`)}"`);
-        run_cmd(`del "${nw}" "${package_nw}"`);
-      } else {
-        run_cmd(`Robocopy "${build_directory}" "${app_directory}" *.* /E`);
+
+        if (process.env.PACKAGE_TYPE === "zip+exe") {
+          run_cmd(`copy /b "${nw}"+"${package_nw}" "${win_path.join(app_directory, `${displayName}.exe`)}"`);
+          run_cmd(`del "${nw}" "${package_nw}"`);
+        }
       }
 
       break;
@@ -189,10 +194,10 @@ async function make_package() {
 
       const resources = `${package_directory}/${displayName}.app/Contents/Resources`;
 
-      if (process.env.PACKAGE_TYPE === "zip") {
-        run_cmd(`cd "${build_directory}" && zip -r "../${resources}/app.nw" .`);
-      } else {
+      if (process.env.PACKAGE_TYPE === "plain") {
         run_cmd(`cp -R "./${build_directory}" "./${resources}/app.nw"`);
+      } else {
+        run_cmd(`cd "${build_directory}" && zip -r "../${resources}/app.nw" .`);
       }
 
       break;
@@ -202,12 +207,14 @@ async function make_package() {
       run_cmd(`mv "${temp_folder}/node_modules/nw/nwjs/" "./${package_directory}/${displayName}/"`);
       if (has_runtime_deps) run_cmd(`mv "${runtime_modules}/" "./${build_directory}/node_modules/"`);
 
-      if (process.env.PACKAGE_TYPE === "zip") {
-        run_cmd(`cd "${build_directory}" && zip -r "../${package_directory}/${displayName}/package.nw" .`);
-        run_cmd(`cd "./${package_directory}/${displayName}" && cat nw package.nw > "${displayName}" && chmod +x "${displayName}"`);
-        run_cmd(`cd "./${package_directory}/${displayName}" && rm nw package.nw`);
-      } else {
+      if (process.env.PACKAGE_TYPE === "plain") {
         run_cmd(`cp -R "./${build_directory}" "./${package_directory}/${displayName}/package.nw"`);
+      } else {
+        run_cmd(`cd "${build_directory}" && zip -r "../${package_directory}/${displayName}/package.nw" .`);
+        if (process.env.PACKAGE_TYPE === "zip+exe") {
+          run_cmd(`cd "./${package_directory}/${displayName}" && cat nw package.nw > "${displayName}" && chmod +x "${displayName}"`);
+          run_cmd(`cd "./${package_directory}/${displayName}" && rm nw package.nw`);
+        }
       }
 
       break;
