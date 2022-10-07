@@ -54,24 +54,25 @@ async function make_package() {
     || "dist"
   );
 
-  let { displayName, dependencies, devDependencies } = JSON.parse(String(await fs.promises.readFile(path.join(process.cwd(), "package.json"))));
+  const { displayName, dependencies, devDependencies } = JSON.parse(String(await fs.promises.readFile(path.join(process.cwd(), "package.json"))));
 
+  let application_name = process.env.APP_NAME || displayName;
   const { nw: nw_version } = devDependencies;
   const version = process.env.NWJS_VERSION || nw_version.replace("-sdk", "");
 
   const config = {
-    "Application name": displayName,
+    "Application name": application_name,
     "Current working directory": process.cwd(),
     "Build directory": build_directory,
     "Package directory": package_directory,
     "NW.js version": version,
-    "Package type": process.env.PACKAGE_TYPE || "normal",
+    "Package type": process.env.PACKAGE_TYPE,
   };
 
   console.info("Running on these settings:");
   console.table(config);
 
-  displayName.replace(" ", preserve_spaces);
+  application_name.replace(" ", preserve_spaces);
 
   // Fetch runtime dependencies
   await fs.promises.writeFile(path.join(temp_folder, "package.json"), JSON.stringify({ dependencies }), { encoding: "utf8" });
@@ -109,7 +110,7 @@ async function make_package() {
   switch (os.platform()) {
 
     case "win32": {
-      const app_directory = win_path.join(".", package_directory, displayName);
+      const app_directory = win_path.join(".", package_directory, application_name);
 
       run_cmd(`Robocopy "${win_path.join(temp_folder, "node_modules/nw/nwjs")}" "${app_directory}" *.* /E /MOVE`);
 
@@ -180,7 +181,7 @@ async function make_package() {
         run_cmd(`move "${package_zip}" "${package_nw}"`);
 
         if (process.env.PACKAGE_TYPE === "zip+exe") {
-          run_cmd(`copy /b "${nw}"+"${package_nw}" "${win_path.join(app_directory, `${displayName}.exe`)}"`);
+          run_cmd(`copy /b "${nw}"+"${package_nw}" "${win_path.join(app_directory, `${application_name}.exe`)}"`);
           run_cmd(`del "${nw}" "${package_nw}"`);
         }
       }
@@ -189,10 +190,10 @@ async function make_package() {
     }
 
     case "darwin": {
-      run_cmd(`mv "${temp_folder}/node_modules/nw/nwjs/nwjs.app/" "./${package_directory}/${displayName}.app/"`);
+      run_cmd(`mv "${temp_folder}/node_modules/nw/nwjs/nwjs.app/" "./${package_directory}/${application_name}.app/"`);
       if (has_runtime_deps) run_cmd(`mv "${runtime_modules}/" "./${build_directory}/node_modules/"`);
 
-      const resources = `${package_directory}/${displayName}.app/Contents/Resources`;
+      const resources = `${package_directory}/${application_name}.app/Contents/Resources`;
 
       if (process.env.PACKAGE_TYPE === "plain") {
         run_cmd(`cp -R "./${build_directory}" "./${resources}/app.nw"`);
@@ -204,16 +205,16 @@ async function make_package() {
     }
 
     case "linux": {
-      run_cmd(`mv "${temp_folder}/node_modules/nw/nwjs/" "./${package_directory}/${displayName}/"`);
+      run_cmd(`mv "${temp_folder}/node_modules/nw/nwjs/" "./${package_directory}/${application_name}/"`);
       if (has_runtime_deps) run_cmd(`mv "${runtime_modules}/" "./${build_directory}/node_modules/"`);
 
       if (process.env.PACKAGE_TYPE === "plain") {
-        run_cmd(`cp -R "./${build_directory}" "./${package_directory}/${displayName}/package.nw"`);
+        run_cmd(`cp -R "./${build_directory}" "./${package_directory}/${application_name}/package.nw"`);
       } else {
-        run_cmd(`cd "${build_directory}" && zip -r "../${package_directory}/${displayName}/package.nw" .`);
+        run_cmd(`cd "${build_directory}" && zip -r "../${package_directory}/${application_name}/package.nw" .`);
         if (process.env.PACKAGE_TYPE === "zip+exe") {
-          run_cmd(`cd "./${package_directory}/${displayName}" && cat nw package.nw > "${displayName}" && chmod +x "${displayName}"`);
-          run_cmd(`cd "./${package_directory}/${displayName}" && rm nw package.nw`);
+          run_cmd(`cd "./${package_directory}/${application_name}" && cat nw package.nw > "${application_name}" && chmod +x "${application_name}"`);
+          run_cmd(`cd "./${package_directory}/${application_name}" && rm nw package.nw`);
         }
       }
 
