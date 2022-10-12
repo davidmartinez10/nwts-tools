@@ -19,9 +19,9 @@ async function nwjs() {
 
   if (process.env.EXECUTION_MODE === "DEBUG") {
     child_process.spawn(
-      nwjs_path,
+      JSON.stringify(nwjs_path),
       [
-        build_directory,
+        JSON.stringify(build_directory),
         `--remote-debugging-port=${debug_port}`,
       ],
       {
