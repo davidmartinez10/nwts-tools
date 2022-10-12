@@ -1,4 +1,4 @@
-import type * as node_child_process from "node:child_process";
+import type node_child_process from "node:child_process";
 import util from "./util";
 
 const child_process = require("node:child_process") as typeof node_child_process;

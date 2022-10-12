@@ -1,9 +1,11 @@
+/// <reference path="types/nwjs.d.ts" />
 import path from "node:path/posix";
 import os from "node:os";
 
 export async function get_nwjs_path() {
   try {
     const absolute_path = path.join(process.cwd(), "node_modules/nw/index.js");
+    /** @type {import("nw")} */
     const { findpath } = await import(
       os.platform() === "win32"
         ? `file:///${absolute_path}`

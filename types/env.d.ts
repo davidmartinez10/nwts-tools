@@ -7,13 +7,13 @@ declare global {
       APP_NAME: string;
       NODE_ENV: 'development' | 'production' | undefined;
       EXECUTION_MODE: "DEBUG" | undefined;
-      LAUNCHER_PORT: number | IntString;
+      DEVSERVER_PORT: number | IntString;
       DEBUG_PORT: number | IntString;
 
       // *nwts-package*
       // Refer to: https://nwjs.readthedocs.io/en/latest/For%20Users/Package%20and%20Distribute/
 
-      /** The directory where you built your app before running the packager. By default takes the value of compilerOptions.outDir from your tsconfig.json, or "build" if the former is falsy. */
+      /** The directory where you built your app before running the packager. Defaults to "build." */
       BUILD_DIRECTORY: string;
       /** The output directory for the package. It defaults to "dist." */
       PACKAGE_DIRECTORY: string;
