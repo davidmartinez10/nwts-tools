@@ -2,7 +2,7 @@
 import { promisify } from "node:util";
 import stream from "node:stream";
 import "zx/globals";
-import { get_nwjs_path } from "../nwjs-path.mjs";
+import { get_nwjs_path } from "nwts-tools/nwjs-path.mjs";
 import got from "got";
 
 const ignore = () => void 0;

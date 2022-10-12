@@ -1,6 +1,6 @@
 #!/usr/bin/env zx
 import "zx/globals";
-import { get_nwjs_path } from "../nwjs-path.mjs";
+import { get_nwjs_path } from "nwts-tools/nwjs-path.mjs";
 
 const ignore = () => void 0;
 

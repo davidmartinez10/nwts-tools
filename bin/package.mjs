@@ -1,7 +1,7 @@
 #!/usr/bin/env zx
 import "zx/globals";
 
-import { patch_nwjs_codecs } from "../patch-nwjs-codecs.mjs";
+import { patch_nwjs_codecs } from "nwts-tools/patch-nwjs-codecs.mjs";
 
 const ignore = () => undefined;
 
@@ -20,7 +20,7 @@ const package_directory = process.env.PACKAGE_DIRECTORY || "dist";
 const { displayName, dependencies, devDependencies } = await fs.readJSON(path.join(process.cwd(), "package.json"));
 
 let application_name = process.env.APP_NAME || displayName;
-const version = process.env.NWJS_VERSION || (dependencies?.nw || devDependencies?.nw).replace("-sdk", "");
+const version = process.env.NWJS_VERSION || (dependencies?.nw || devDependencies?.nw).replace("^", "").replace("-sdk", "");
 
 const config = {
   "Application name": application_name,
