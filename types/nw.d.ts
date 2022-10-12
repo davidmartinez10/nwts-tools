@@ -1,3 +1,1 @@
-declare module "nw" {
-  function findpath(): string;
-}
+declare module "nw" { function findpath(): string; }

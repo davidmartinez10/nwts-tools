@@ -1,13 +1,13 @@
-import { Permission } from "./shared";
+import {Permission} from "./shared";
 
-type Protocol = "http" | "https" | "tcp" | "udp" | "ws" | string;
+type Protocol  = "http"|"https"|"tcp"|"udp"|"ws"|string;
 type Subdomain = string;
-type Domain = "localhost" | string;
-type TLD = "com" | "net" | "org" | string;
-type Hostname = Domain | `${Subdomain}.${Domain}.${TLD}` | `${Domain}.${TLD}`;
-type Host = `${Protocol}://${Hostname}` | `${Protocol}://${Hostname}:${number}`;
-type Location = Host | `${Host}/${string}`
-type URLLike = Location | "<all_urls>" | string;
+type Domain    = "localhost"|string;
+type TLD       = "com"|"net"|"org"|string;
+type Hostname  = Domain|`${Subdomain}.${Domain}.${TLD}`|`${Domain}.${TLD}`;
+type Host = `${Protocol}://${Hostname}`|`${Protocol}://${Hostname}:${number}`;
+type Location = Host|`${Host}/${string}`
+type URLLike = Location|"<all_urls>"|string;
 
 export type Permission =
   "activeTab" |
@@ -110,12 +110,9 @@ export interface NWJSManifest {
     kiosk?: boolean;
     tranparent?: boolean;
   },
-  webkit?: {
-    double_tap_to_zoom_enabled?: boolean;
-    plugin?: boolean;
-  },
-  "user-agent"?: string;
-  "node-remote"?: URLLike | URLLike[];
+    webkit?: { double_tap_to_zoom_enabled?: boolean; plugin?: boolean; },
+    "user-agent"?: string;
+  "node-remote"?: URLLike|URLLike[];
   "chromium-args"?: string;
   crash_report_url?: URLLike;
   "js-flags"?: string;
@@ -129,4 +126,4 @@ export interface NWJSManifest {
   "single-instance"?: boolean;
   "no-edit-menu"?: boolean;
   "toolbar"?: boolean;
-};
+}
