@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-import fs from "node:fs/promises";
 import child_process from "node:child_process";
-import path from "node:path";
 
 import { get_nwjs_path } from "../nwjs-path.mjs";
 import got from "got";
@@ -11,14 +9,12 @@ const ignore = () => undefined;
 async function nwjs() {
   const build_directory = (
     process.env.BUILD_DIRECTORY
-    || JSON.parse((String(await fs.readFile(path.join(process.cwd(), "tsconfig.json")).catch(ignore))))?.compilerOptions?.outDir
     || "build"
   );
 
   const debug_port = (
     process.env.DEBUG_PORT
-    || JSON.parse(String(await fs.readFile(path.join(process.cwd(), ".vscode/launch.json")).catch(ignore)))?.configurations[0]?.port
-    || 19260
+    || 9222
   );
 
   const nwjs_path = await get_nwjs_path();

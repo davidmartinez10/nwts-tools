@@ -1,228 +1,146 @@
-#!/usr/bin/env node
-import child_process from "node:child_process";
-import fs from "node:fs";
-import path from "node:path/posix";
-import win_path from "node:path/win32";
-import os from "node:os";
+#!/usr/bin/env zx
+import "zx/globals";
 
 import { patch_nwjs_codecs } from "../patch-nwjs-codecs.mjs";
 
-const preserve_spaces = `🇺🇦${Number.MAX_SAFE_INTEGER}🇺🇦`;
 const ignore = () => undefined;
 
-/**
- * @param {string} command
- * @param {import("node:child_process").SpawnSyncOptions} [options]
- */
-function run_cmd(command, options) {
-  const arr = command.split(" ");
-  const cmd = arr.shift() || "";
-  const args = arr.map(function callbackfn(element) {
-    return element.replace(preserve_spaces, "\\ ");
-  });
+console.clear();
+console.info("nwts-package\n");
 
-  child_process.spawnSync(
-    cmd,
-    args,
-    Object.assign({
-      shell: true,
-      cwd: process.cwd(),
-      env: process.env,
-      stdio: "inherit",
-      encoding: "utf-8",
-    }, options));
+if (!["zip", "zip+exe"].includes(process.env.PACKAGE_TYPE || "")) {
+  process.env.PACKAGE_TYPE = "plain";
 }
 
-async function make_package() {
-  console.clear();
-  console.info("nwts-package\n");
+const temp_folder = await fs.mkdtemp(path.join(os.tmpdir(), "build-"));
 
-  if (!["zip", "zip+exe"].includes(process.env.PACKAGE_TYPE || "")) {
-    process.env.PACKAGE_TYPE = "plain";
-  }
+const build_directory = process.env.BUILD_DIRECTORY || "build";
+const package_directory = process.env.PACKAGE_DIRECTORY || "dist";
 
-  const temp_folder = await fs.promises.mkdtemp(path.join(os.tmpdir(), "build-"));
+const { displayName, dependencies, devDependencies } = await fs.readJSON(path.join(process.cwd(), "package.json"));
 
-  const build_directory = (
-    process.env.BUILD_DIRECTORY
-    || JSON.parse((String(await fs.promises.readFile(path.join(process.cwd(), "tsconfig.json")).catch(ignore))))?.compilerOptions?.outDir
-    || "build"
+let application_name = process.env.APP_NAME || displayName;
+const version = process.env.NWJS_VERSION || (dependencies?.nw || devDependencies?.nw).replace("-sdk", "");
+
+const config = {
+  "Application name": application_name,
+  "Current working directory": process.cwd(),
+  "Build directory": build_directory,
+  "Package directory": package_directory,
+  "NW.js version": version,
+  "Package type": process.env.PACKAGE_TYPE,
+};
+
+console.info("Running on these settings:");
+console.table(config);
+
+await $`cd ${temp_folder} && npm install nw@${version}`;
+
+if (process.env.NWJS_FFMPEG === "PATCH") {
+  const { findpath } = await import(
+    os.platform() === "win32"
+      ? `file:///${path.join(temp_folder, "node_modules/nw/index.js")}`
+      : path.join(temp_folder, "node_modules/nw/index.js")
   );
 
-  const package_directory = (
-    process.env.PACKAGE_DIRECTORY
-    || "dist"
-  );
+  await patch_nwjs_codecs(findpath());
+}
 
-  const { displayName, dependencies, devDependencies } = JSON.parse(String(await fs.promises.readFile(path.join(process.cwd(), "package.json"))));
+await fs.ensureDir(package_directory);
 
-  let application_name = process.env.APP_NAME || displayName;
-  const { nw: nw_version } = devDependencies;
-  const version = process.env.NWJS_VERSION || nw_version.replace("-sdk", "");
+switch (os.platform()) {
+  case "win32": {
+    const app_directory = path.join(".", package_directory, application_name);
 
-  const config = {
-    "Application name": application_name,
-    "Current working directory": process.cwd(),
-    "Build directory": build_directory,
-    "Package directory": package_directory,
-    "NW.js version": version,
-    "Package type": process.env.PACKAGE_TYPE,
-  };
+    await $`Robocopy ${path.join(temp_folder, "node_modules/nw/nwjs")} ${app_directory} *.* /E /MOVE`;
 
-  console.info("Running on these settings:");
-  console.table(config);
+    if (process.env.PACKAGE_TYPE === "plain") {
+      await $`Robocopy ${build_directory} ${app_directory} *.* /E`;
+    } else {
+      const nw = path.join(app_directory, "nw.exe");
+      const package_nw = path.join(app_directory, "package.nw");
+      const package_zip = path.join(temp_folder, "package.zip");
 
-  application_name.replace(" ", preserve_spaces);
-
-  // Fetch runtime dependencies
-  await fs.promises.writeFile(path.join(temp_folder, "package.json"), JSON.stringify({ dependencies }), { encoding: "utf8" });
-  child_process.execSync(`npm install`, { "cwd": temp_folder, stdio: "inherit" });
-
-  const has_runtime_deps = Object.values(dependencies).length > 0;
-
-  if (has_runtime_deps) {
-    console.info("\nBundling these runtime dependencies:");
-    console.table(dependencies);
-  }
-
-  const runtime_modules = path.join(temp_folder, "runtime_modules");
-
-  if (has_runtime_deps) {
-    await fs.promises.rename(path.join(temp_folder, "node_modules"), runtime_modules);
-  }
-
-  child_process.execSync(`npm install nw@${version}`, { "cwd": temp_folder, stdio: "inherit" });
-
-  if (process.env.NWJS_FFMPEG === "PATCH") {
-    const { findpath } = await import(
-      os.platform() === "win32"
-        ? `file:///${path.join(temp_folder, "node_modules/nw/index.js")}`
-        : path.join(temp_folder, "node_modules/nw/index.js")
-    );
-
-    await patch_nwjs_codecs(findpath());
-  }
-
-  if (!fs.existsSync(package_directory)) {
-    run_cmd(`mkdir ${package_directory}`);
-  }
-
-  switch (os.platform()) {
-
-    case "win32": {
-      const app_directory = win_path.join(".", package_directory, application_name);
-
-      run_cmd(`Robocopy "${win_path.join(temp_folder, "node_modules/nw/nwjs")}" "${app_directory}" *.* /E /MOVE`);
-
-      if (has_runtime_deps) {
-        run_cmd(`Robocopy ${JSON.stringify(path.normalize(runtime_modules))} ${JSON.stringify(path.join(build_directory, "node_modules"))} *.* /E /MOVE`);
+      let with_dirs = false;
+      for await (const item of await fs.opendir(build_directory)) {
+        if (item.isDirectory()) {
+          const dirpath = path.join(build_directory, item.name);
+          await $`powershell Compress-Archive ${dirpath} ${dirpath}.zip`;
+          await $`powershell Remove-Item ${dirpath} -Recurse`;
+          with_dirs = true;
+        }
       }
 
-      if (process.env.PACKAGE_TYPE === "plain") {
-        run_cmd(`Robocopy "${build_directory}" "${app_directory}" *.* /E`);
-      } else {
-        const nw = win_path.join(app_directory, "nw.exe");
-        const package_nw = win_path.join(app_directory, "package.nw");
-        const package_zip = win_path.join(temp_folder, "package.zip");
+      if (with_dirs) {
+        const manifest = await fs.readJSON(path.join(build_directory, "package.json"));
 
-        let with_dirs = false;
-        for await (const item of await fs.promises.opendir(build_directory)) {
-          if (item.isDirectory()) {
-            const dirpath = win_path.join(build_directory, item.name);
-            run_cmd(`powershell Compress-Archive "${dirpath}" "${dirpath}.zip"`);
-            run_cmd(`powershell Remove-Item "${dirpath}" -Recurse`);
-            with_dirs = true;
-          }
-        }
+        async function archive_expander() {
+          const fs = globalThis.require("node:fs/promises");
+          const path = globalThis.require("node:path");
+          const { execSync } = globalThis.require("node:child_process");
+          const manifest = globalThis.require("./package.json");
 
-        if (with_dirs) {
-          const manifest = JSON.parse(String(await fs.promises.readFile(path.join(build_directory, "package.json"))));
-
-          const manifest_main = String(await fs.promises.readFile(path.join(build_directory, manifest.main)));
-          let launcher_js;
-
-          if (path.extname(manifest.main) === ".html") {
-            const scripts = manifest_main.split("\n")
-              .filter(function predicate(value) {
-                return value.includes("<script");
-              })
-              .map(function callbackfn(value) {
-                const script_src = value.split(`src="`)[1].split(`"`)[0];
-                return script_src;
-              })
-              .filter(function predicate(value) {
-                return [".js", ".cjs", ".mjs"].includes(path.extname(value)) && value[0] === "/";
-              });
-
-            launcher_js = String(await fs.promises.readFile(path.join(build_directory, scripts[0])));
-          } else {
-            launcher_js = manifest_main;
-          }
-
-          async function expander() {
-            const win = nw.Window.get();
-            win.hide();
-            for await (const item of await require("node:fs/promises").opendir(".")) {
-              if (require("node:path").extname(item.name) === ".zip") {
-                const { execSync } = require("node:child_process");
-                execSync(`powershell Expand-Archive ${item.name} -DestinationPath .`);
-                execSync(`powershell Remove-Item ${item.name}`);
-              }
+          for await (const item of await fs.opendir(".")) {
+            if (path.extname(item.name) === ".zip") {
+              execSync(`powershell Expand-Archive ${item.name} -DestinationPath .`);
+              execSync(`powershell Remove-Item ${item.name}`);
             }
-            win.show();
-            "__launcher__";
           }
 
-          const script = `${String(expander).replace(`"__launcher__";`, launcher_js)}; expander();`;
-          await fs.promises.writeFile(path.join(build_directory, "launcher.js"), script);
+          manifest.main = "___NWTS-TOOLS_RESTORE_ORIGINAL_MAIN___";
+          fs.writeFile("./package.json", JSON.stringify(manifest));
+          nw.Window.get().reload();
         }
 
-        run_cmd(`cd "${build_directory}" && powershell Compress-Archive ".\\*" "${package_zip}"`);
-        run_cmd(`move "${package_zip}" "${package_nw}"`);
+        const expander_path = "nwts-tools_archive_expander.js";
+        const script = `(${archive_expander})()`.replace("___NWTS-TOOLS_RESTORE_ORIGINAL_MAIN___", manifest.main);
+        await fs.writeFile(path.join(build_directory, expander_path), script);
 
-        if (process.env.PACKAGE_TYPE === "zip+exe") {
-          run_cmd(`copy /b "${nw}"+"${package_nw}" "${win_path.join(app_directory, `${application_name}.exe`)}"`);
-          run_cmd(`del "${nw}" "${package_nw}"`);
-        }
+        manifest.main = expander_path;
+
       }
 
-      break;
-    }
+      await $`cd ${build_directory} && powershell Compress-Archive ".\\*" ${package_zip}`;
+      await $`move ${package_zip} ${package_nw}`;
 
-    case "darwin": {
-      run_cmd(`mv "${temp_folder}/node_modules/nw/nwjs/nwjs.app/" "./${package_directory}/${application_name}.app/"`);
-      if (has_runtime_deps) run_cmd(`mv "${runtime_modules}/" "./${build_directory}/node_modules/"`);
-
-      const resources = `${package_directory}/${application_name}.app/Contents/Resources`;
-
-      if (process.env.PACKAGE_TYPE === "plain") {
-        run_cmd(`cp -R "./${build_directory}" "./${resources}/app.nw"`);
-      } else {
-        run_cmd(`cd "${build_directory}" && zip -r "../${resources}/app.nw" .`);
+      if (process.env.PACKAGE_TYPE === "zip+exe") {
+        await $`copy /b ${nw}+${package_nw} ${path.join(app_directory, `${application_name}.exe`)}`;
+        await $`del ${nw} ${package_nw}`;
       }
-
-      break;
     }
 
-    case "linux": {
-      run_cmd(`mv "${temp_folder}/node_modules/nw/nwjs/" "./${package_directory}/${application_name}/"`);
-      if (has_runtime_deps) run_cmd(`mv "${runtime_modules}/" "./${build_directory}/node_modules/"`);
-
-      if (process.env.PACKAGE_TYPE === "plain") {
-        run_cmd(`cp -R "./${build_directory}" "./${package_directory}/${application_name}/package.nw"`);
-      } else {
-        run_cmd(`cd "${build_directory}" && zip -r "../${package_directory}/${application_name}/package.nw" .`);
-        if (process.env.PACKAGE_TYPE === "zip+exe") {
-          run_cmd(`cd "./${package_directory}/${application_name}" && cat nw package.nw > "${application_name}" && chmod +x "${application_name}"`);
-          run_cmd(`cd "./${package_directory}/${application_name}" && rm nw package.nw`);
-        }
-      }
-
-      break;
-    }
+    break;
   }
 
-  await fs.promises.unlink(temp_folder).catch(ignore);
+  case "darwin": {
+    await $`mv ${path.join(temp_folder, "/node_modules/nw/nwjs/nwjs.app/")} ${path.join(package_directory, application_name + ".app")}`;
+
+    const resources = `${package_directory}/${application_name}.app/Contents/Resources`;
+
+    if (process.env.PACKAGE_TYPE === "plain") {
+      await $`cp -R ${build_directory} ${path.join(resources, "/app.nw")}`;
+    } else {
+      await $`cd ${build_directory} && zip -r ${path.join("..", resources, "app.nw")} .`;
+    }
+
+    break;
+  }
+
+  case "linux": {
+    await $`mv ${path.join(temp_folder, "/node_modules/nw/nwjs/")} ${path.join(package_directory, application_name)}`;
+
+    if (process.env.PACKAGE_TYPE === "plain") {
+      await $`cp -R ${build_directory} ${path.join(package_directory, application_name, "package.nw")}`;
+    } else {
+      await $`cd ${build_directory} && zip -r ${path.join("..", package_directory, application_name, "package.nw")} .`;
+      if (process.env.PACKAGE_TYPE === "zip+exe") {
+        await $`cd ${path.join(package_directory, application_name)} && cat nw package.nw > ${application_name} && chmod +x ${application_name}`;
+        await $`cd ${path.join(package_directory, application_name)} && rm nw package.nw`;
+      }
+    }
+
+    break;
+  }
 }
 
-make_package();
+await fs.unlink(temp_folder).catch(ignore);
