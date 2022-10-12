@@ -3,6 +3,7 @@
   "version": "0.2.0",
   "author": "David Martínez",
   "bin": {
+    "nwts-compile": "bin/compile.mjs",
     "nwts-package": "bin/package.mjs",
     "nwts-patch-codecs": "bin/patch-codecs.mjs",
     "nwts-run": "bin/run.mjs"

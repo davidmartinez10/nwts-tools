@@ -4,8 +4,6 @@ import child_process from "node:child_process";
 import { get_nwjs_path } from "../nwjs-path.mjs";
 import got from "got";
 
-const ignore = () => undefined;
-
 async function nwjs() {
   const build_directory = (
     process.env.BUILD_DIRECTORY
