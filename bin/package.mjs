@@ -80,10 +80,10 @@ case "win32": {
         = await fs.readJSON(path.join(build_directory, "package.json"));
 
       async function archive_expander() {
-        const fs           = globalThis.require("node:fs/promises");
-        const path         = globalThis.require("node:path");
-        const { execSync } = globalThis.require("node:child_process");
-        const manifest     = globalThis.require("./package.json");
+        const fs           = nw.require("node:fs/promises");
+        const path         = nw.require("node:path");
+        const { execSync } = nw.require("node:child_process");
+        const manifest     = nw.require("./package.json");
 
         for await (const item of await fs.opendir(".")) {
           if (path.extname(item.name) === ".zip") {

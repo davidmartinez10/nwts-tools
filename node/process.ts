@@ -1,3 +1,3 @@
 import type node_process from "node:process";
 
-export default require("node:process") as typeof node_process;
+export default nw.require("node:process") as typeof node_process;

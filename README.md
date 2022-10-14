@@ -42,7 +42,7 @@ npx nwts-run
 ```
 
 ### Typed Node.js built-in modules
-NW.js imports built-in modules with the `require()` function. Here is provided a collection of typed exports. Some examples:
+In NW.js you can import Node.js built-in modules with the `nw.require()` function, whose return type is `any`. Here is provided a collection of typed exports from Node.js builtin modules. Some examples:
 ```typescript
 import util from "nwts-tools/node/util";
 import fs from "nwts-tools/node/fs";

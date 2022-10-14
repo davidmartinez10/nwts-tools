@@ -8,9 +8,7 @@ declare global {
      * displayName from your package.json.
      */
     APP_NAME: string;
-    NODE_ENV: "development"|"production"|undefined;
-    EXECUTION_MODE: "DEBUG"|undefined;
-    DEVSERVER_PORT: number|IntString;
+    NODE_ENV: "development"|"production";
     DEBUG_PORT: number|IntString;
 
     // *nwts-package*

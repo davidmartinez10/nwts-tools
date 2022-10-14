@@ -1,3 +1,3 @@
 import type node_util from "node:util";
 
-export default require("node:util") as typeof node_util;
+export default nw.require("node:util") as typeof node_util;
