@@ -61,6 +61,9 @@ import path from "nwts-tools/node/path";
 
 ---
 
-Check out this `Solid.js` project starter that takes full advantage of `NW.ts-Tools` features:
+Check out these starter templates that take full advantage of `NW.ts-Tools` features:
 
-[NW.ts Solid Starter](https://github.com/davidmartinez10/nwts-solid-starter.git)
+[NW.ts-Tools Vanilla Starter](https://github.com/davidmartinez10/nwts-vanilla-starter)
+[NW.ts-Tools Solid Starter](https://github.com/davidmartinez10/nwts-solid-starter)
+[NW.ts-Tools React Starter](https://github.com/davidmartinez10/nwts-react-starter)
+[NW.ts-Tools Gatsby Starter](https://github.com/davidmartinez10/nwts-gatsby-starter)
