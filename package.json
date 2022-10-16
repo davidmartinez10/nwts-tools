@@ -9,7 +9,7 @@
     "nwts-run": "bin/run.mjs"
   },
   "scripts": {
-    "postinstall": "node ./patch-zx.mjs",
+    "postinstall": "node patch-zx.js",
     "version": "git add -A",
     "postversion": "git push && git push --tags"
   },

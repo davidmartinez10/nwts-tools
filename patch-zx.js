@@ -1,6 +1,7 @@
-import fs from "node:fs";
+const fs   = require("node:fs");
+const path = require("node:path");
 
-const file = "./node_modules/zx/build/core.js";
+const file = path.join(path.dirname(require.resolve("zx")), "core.js");
 
 const bad_code
   = `
@@ -29,7 +30,5 @@ const good_code
 }
 `;
 
-const core = String(await fs.promises.readFile(file));
-
-await fs.promises.writeFile(file, core.replace(bad_code, good_code),
-                            { encoding: "utf8" });
+const core = String(fs.readFileSync(file));
+fs.writeFileSync(file, core.replace(bad_code, good_code), { encoding: "utf8" });
