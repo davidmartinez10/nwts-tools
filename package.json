@@ -1,28 +1,40 @@
 {
   "name": "nwts-tools",
   "version": "0.3.6",
+  "types": "lib/types/index.d.ts",
   "author": "David Martínez",
   "bin": {
-    "nwts-compile": "bin/compile.mjs",
-    "nwts-package": "bin/package.mjs",
-    "nwts-patch-codecs": "bin/patch-codecs.mjs",
-    "nwts-run": "bin/run.mjs"
+    "nwts-compile": "dist/cli/compile.js",
+    "nwts-package": "dist/cli/package.js",
+    "nwts-patch-codecs": "dist/cli/patch-codecs.js",
+    "nwts-run": "dist/cli/run.js"
+  },
+  "engines": {
+    "node": ">=13.2"
   },
   "scripts": {
-    "postinstall": "node patch-zx.js",
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "prepare": "npm run build",
     "version": "git add -A",
     "postversion": "git push && git push --tags"
   },
-  "dependencies": {
-    "got": "^12.5.0",
-    "zx": "^7.1.1"
-  },
   "devDependencies": {
-    "@types/chrome": "^0.0.197",
-    "@types/node": "^18.7.18",
-    "@types/nw.js": "^0.13.16",
-    "clang-format": "^1.8.0",
-    "typescript": "^4.8.3"
+    "@types/chrome": "^0.0.308",
+    "@types/node": "^22.13.10",
+    "@types/nw.js": "^0.92.0",
+    "typescript": "^5.8.2"
+  },
+  "peerDependencies": {
+    "nw": "*"
+  },
+  "files": [
+    "dist/**/*",
+    "lib/**/*"
+  ],
+  "packageManager": "pnpm@10.6.0+sha512.df0136e797db0cfa7ec1084e77f3bdf81bacbae9066832fbf95cba4c2140ad05e64f316cde51ce3f99ea00a91ffc702d6aedd3c0f450f895e3e7c052fe573cd8",
+  "dependencies": {
+    "got": "^12.5.0"
   },
   "description": "Tools for running, patching, and packaging NW.js apps.",
   "repository": {
@@ -39,6 +51,5 @@
   "bugs": {
     "url": "https://github.com/davidmartinez10/nwts-tools/issues"
   },
-  "homepage": "https://github.com/davidmartinez10/nwts-tools#readme",
-  "types": "types/index.d.ts"
+  "homepage": "https://github.com/davidmartinez10/nwts-tools#readme"
 }

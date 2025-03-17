@@ -1,14 +1,19 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "allowJs": true,
-    "checkJs": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
+    "target": "ES2021",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "lib": ["ES2021"],
+    "outDir": "./dist",
+    "rootDir": "./src",
     "strict": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "noEmit": true,
-    "moduleResolution": "node"
-  }
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationDir": "./dist/types",
+    "types": ["@types/node", "@types/nw.js", "@types/chrome"]
+  },
+  "include": ["src/**/*", "lib/types/index.d.ts"],
+  "exclude": ["node_modules", "dist"]
 }
