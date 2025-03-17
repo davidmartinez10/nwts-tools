@@ -1,6 +1,6 @@
 {
   "name": "nwts-tools",
-  "version": "0.3.6",
+  "version": "0.4.0",
   "types": "lib/types/index.d.ts",
   "author": "David Martínez",
   "bin": {
