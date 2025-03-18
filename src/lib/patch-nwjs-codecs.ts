@@ -25,10 +25,10 @@ export async function patch_nwjs_codecs(nw_path: string, version?: string) {
     linux: "linux",
   };
 
-  const url = String(child_process.execSync(
-    `npx -y nwjs-ffmpeg-prebuilt -v ${version} -a ${os.arch()} -p ${
-      //@ts-ignore
-      os_map[os.platform()]} --get-download-url`));
+  const url = String(child_process.execSync(`cd ${
+    __dirname} && npx nwjs-ffmpeg-prebuilt -v ${version} -a ${os.arch()} -p ${
+    //@ts-ignore
+    os_map[os.platform()]} --get-download-url`));
 
   const     temp_folder
     = await fs.promises.mkdtemp(path.join(os.tmpdir(), "nwjs-ffmpeg-"));
