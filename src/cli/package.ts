@@ -209,8 +209,7 @@ async function nwts_package() {
         await proper_spawn(`cd ${
           escape_path(package_directory,
                       application_name)} && cat nw package.nw > ${
-          escape_path(
-            application_name)} && chmod +x ${escape_path(application_name)}`);
+          escape_path(name)} && chmod +x ${escape_path(name)}`);
         await proper_spawn(`cd ${
           escape_path(package_directory,
                       application_name)} && rm nw package.nw`);
