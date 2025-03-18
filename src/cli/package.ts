@@ -25,7 +25,7 @@ async function nwts_package() {
   const build_directory   = process.env.BUILD_DIRECTORY || "build";
   const package_directory = process.env.PACKAGE_DIRECTORY || "dist";
 
-  const { displayName, dependencies, devDependencies } = JSON.parse(
+  const { displayName, name, dependencies, devDependencies } = JSON.parse(
     await fs.promises.readFile(path.join(process.cwd(), "package.json"),
                                { encoding: "utf8" }));
 
@@ -82,6 +82,8 @@ async function nwts_package() {
     if (process.env.PACKAGE_TYPE === "plain") {
       await proper_spawn(`Robocopy ${escape_path(build_directory)} ${
         escape_path(app_directory)} *.* /E`);
+      await fs.promises.rename(path.join(app_directory, "nw.exe"),
+                               path.join(app_directory, name + ".exe"));
     } else {
       const nw          = path.join(app_directory, "nw.exe");
       const package_nw  = path.join(app_directory, "package.nw");
@@ -155,10 +157,13 @@ async function nwts_package() {
 
       if (process.env.PACKAGE_TYPE === "zip+exe") {
         await proper_spawn(`copy /b nw.exe+package.nw ".${path.sep}${
-                             application_name}.exe"`,
+                             name}.exe"`,
                            app_directory, "cmd.exe");
         await proper_spawn(`del ${escape_path(nw)}`);
         await proper_spawn(`del ${escape_path(package_nw)}`);
+      } else {
+        await fs.promises.rename(path.join(app_directory, "nw.exe"),
+                                 path.join(app_directory, name + ".exe"));
       }
     }
 
@@ -190,6 +195,10 @@ async function nwts_package() {
     if (process.env.PACKAGE_TYPE === "plain") {
       await proper_spawn(`cp -R ${escape_path(build_directory)} ${
         escape_path(package_directory, application_name, "package.nw")}`);
+      await fs.promises.rename(path.join(package_directory, application_name,
+                                         "nw"),
+                               path.join(package_directory, application_name,
+                                         name));
     } else {
       await proper_spawn(`cd ${escape_path(build_directory)} && zip -r ${
         escape_path("..", package_directory, application_name,
@@ -203,6 +212,11 @@ async function nwts_package() {
         await proper_spawn(`cd ${
           escape_path(package_directory,
                       application_name)} && rm nw package.nw`);
+      } else {
+        await fs.promises.rename(path.join(package_directory, application_name,
+                                           "nw"),
+                                 path.join(package_directory, application_name,
+                                           name));
       }
     }
 
