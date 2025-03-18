@@ -85,7 +85,7 @@ async function nwts_package() {
       = await import(os.platform() === "win32" ? `file:///${absolute_path}`
                                                : absolute_path) as
         typeof import("nw");
-      await   patch_nwjs_codecs(findpath(), version);
+      await   patch_nwjs_codecs(await findpath(), version);
     }
     temp_nwjs = path.join(temp_folder, "node_modules/nw/nwjs");
   }

@@ -8,7 +8,7 @@ import {proper_spawn, escape_path} from "../lib/proper-spawn";
 async function recursively_walk(dir: string) {
   const nw = await import("nw");
 
-  let compiler = nw.findpath();
+  let compiler = await nw.findpath();
 
   switch (os.platform()) {
   case "win32": compiler = compiler.replace("nw.exe", "nwjc.exe"); break;

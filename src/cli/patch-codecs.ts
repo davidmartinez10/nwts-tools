@@ -3,7 +3,7 @@ import {patch_nwjs_codecs} from "../lib/patch-nwjs-codecs";
 
 async function patch_codecs() {
   const nw = await import("nw");
-  await            patch_nwjs_codecs(nw.findpath());
+  await            patch_nwjs_codecs(await nw.findpath());
 }
 
 patch_codecs()
