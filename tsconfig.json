@@ -11,7 +11,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
-    "declarationDir": "./dist/types",
     "types": ["@types/node", "@types/nw.js", "@types/chrome"]
   },
   "include": ["src/**/*", "lib/types/index.d.ts"],

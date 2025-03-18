@@ -3,8 +3,10 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 
+import semver from "semver";
+
 import {patch_nwjs_codecs} from "../lib/patch-nwjs-codecs";
-import {escape_path, proper_spawn} from "../lib/proper_spawn";
+import {escape_path, proper_spawn} from "../lib/proper-spawn";
 
 async function nwts_package() {
 
@@ -25,12 +27,11 @@ async function nwts_package() {
     await fs.promises.readFile(path.join(process.cwd(), "package.json"),
                                { encoding: "utf8" }));
 
-  let   application_name = process.env.APP_NAME || displayName;
+  let application_name = process.env.APP_NAME || displayName;
+
   const version
-    = (process.env.NWJS_VERSION
-       || (dependencies?.nw || devDependencies?.nw).replace("-sdk", ""))
-        .replace("~", "")
-        .replace("^", "");
+    = process.env.NWJS_VERSION
+      || semver.coerce(dependencies?.nw || devDependencies?.nw)!.version;
 
   const config = {
     "Application name": application_name,
@@ -44,18 +45,17 @@ async function nwts_package() {
   console.info("Running on these settings:");
   console.table(config);
 
-
-  const os_map = {
-    win32: "win",
-    darwin: "osx",
-    linux: "linux",
-  };
-
   let temp_nwjs = "";
 
   const nw = await import("nw");
   //@ts-ignore
   if (nw.get) {
+    const os_map = {
+      win32: "win",
+      darwin: "osx",
+      linux: "linux",
+    };
+
     await fs.promises.unlink("./nwjs").catch(Boolean);
     //@ts-ignore
     await nw.get({
@@ -88,9 +88,11 @@ async function nwts_package() {
     temp_nwjs = path.join(temp_folder, "node_modules/nw/nwjs");
   }
 
-  if (! fs.existsSync(package_directory)) {
-    await fs.promises.mkdir(package_directory);
+  if (fs.existsSync(package_directory)) {
+    await fs.promises.rm(package_directory, { recursive: true, force: true })
+      .catch(Boolean);
   }
+  await fs.promises.mkdir(package_directory);
 
   switch (os.platform()) {
   case "win32": {
@@ -229,7 +231,7 @@ async function nwts_package() {
     break;
   }
   }
-
+  await fs.promises.unlink("./nwjs").catch(Boolean);
   await fs.promises.unlink(temp_folder).catch(Boolean);
 }
 

@@ -5,7 +5,10 @@ import path from "path";
 export function proper_spawn(command: string, cwd = process.cwd(),
                              shell = os.platform() === "win32" ? "powershell"
                                                                : "bash") {
+  console.log(`\n$ \x1b[33m${command}\x1b[0m\n`);
+
   const [cmd, ...args] = command.replaceAll("\\ ", "\n").split(" ");
+
   const child
     = child_process.spawn(cmd,
                           args.map(function callbackfn(
@@ -16,7 +19,20 @@ export function proper_spawn(command: string, cwd = process.cwd(),
                             env: process.env,
                             stdio: "inherit",
                           });
-  return new Promise(function(resolve, reject) { child.on("close", resolve); });
+
+  const p
+    = new Promise(function(resolve, reject) { child.on("close", resolve); }) as
+        Promise<void>
+      & { kill(): Boolean };
+
+  p.kill = function() {
+    if (! child.kill()) {
+      if (child.pid) { return process.kill(child.pid); }
+    }
+    return true;
+  };
+
+  return p;
 }
 
 export function escape_path(...paths: string[]) {
