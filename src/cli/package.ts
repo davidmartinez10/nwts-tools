@@ -25,12 +25,12 @@ async function nwts_package() {
     await fs.promises.readFile(path.join(process.cwd(), "package.json"),
                                { encoding: "utf8" }));
 
-  let application_name = process.env.APP_NAME || displayName;
-  const [major = 0, minor = 0, patch = 0]
-    = (dependencies?.nw || devDependencies?.nw)
-        .split("")
-        .filter(function(e: string) { return Number(e) >= 0 });
-  const version = process.env.NWJS_VERSION || [major, minor, patch].join(".");
+  let   application_name = process.env.APP_NAME || displayName;
+  const version
+    = (process.env.NWJS_VERSION
+       || (dependencies?.nw || devDependencies?.nw).replace("-sdk", ""))
+        .replace("~", "")
+        .replace("^", "");
 
   const config = {
     "Application name": application_name,

@@ -13,11 +13,11 @@ export async function patch_nwjs_codecs(nw_path: string) {
   const { got }                           = await import("got");
   const { dependencies, devDependencies } = JSON.parse(String(
     await fs.promises.readFile(path.join(process.cwd(), "package.json"))));
-  const [major = 0, minor = 0, patch = 0]
-    = (dependencies?.nw || devDependencies?.nw)
-        .split("")
-        .filter(function(e: string) { return Number(e) >= 0 });
-  const version = [major, minor, patch].join(".");
+
+  const version = (dependencies?.nw || devDependencies?.nw)
+                    .replace("~", "")
+                    .replace("^", "")
+                    .replace("-sdk", "");
 
   const url = String(child_process.execSync(
     `npx -y nwjs-ffmpeg-prebuilt -v ${version} --get-download-url`));
