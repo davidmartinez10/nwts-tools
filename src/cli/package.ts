@@ -47,48 +47,23 @@ async function nwts_package() {
   console.log("Running on these settings:");
   console.table(config);
 
-  let temp_nwjs = "";
+  await proper_spawn(`npm install nw@${version}`, temp_folder);
+  const nwjs = path.join(temp_folder, "node_modules/nw");
+  const { main }
+  = JSON.parse(await fs.promises.readFile(path.join(nwjs, "package.json"),
+                                          { encoding: "utf8" }));
+  const absolute_path = path.join(nwjs, main);
+  const nw = await import(os.platform() === "win32" ? `file:///${absolute_path}`
+                                                    : absolute_path) as
+             typeof import("nw");
 
-  const nw = await import("nw");
-  //@ts-ignore
-  if (nw.get) {
-    const os_map = {
-      win32: "win",
-      darwin: "osx",
-      linux: "linux",
-    };
-
-    await fs.promises.unlink("./nwjs").catch(Boolean);
-    //@ts-ignore
-    await nw.get({
-      version: semver.coerce(version)?.version || "latest",
-      flavor: version.includes("sdk") ? "sdk" : "normal",
-      //@ts-ignore
-      platform: os_map[os.platform()],
-      arch: os.arch(),
-      cacheDir: temp_folder,
-      ffmpeg: process.env.NWJS_FFMPEG === "PATCH",
-      downloadUrl: "https://dl.nwjs.io",
-      cache: false
-    });
-
-    temp_nwjs = await fs.promises.realpath("./nwjs");
-  } else {
-    await proper_spawn(`npm install nw@${version}`, temp_folder);
-    if (process.env.NWJS_FFMPEG === "PATCH") {
-      const nwjs = path.join(temp_folder, "node_modules/nw");
-      const { main }
-      = JSON.parse(await fs.promises.readFile(path.join(nwjs, "package.json"),
-                                              { encoding: "utf8" }));
-      const absolute_path = path.join(nwjs, main);
-      const { findpath }
-      = await import(os.platform() === "win32" ? `file:///${absolute_path}`
-                                               : absolute_path) as
-        typeof import("nw");
-      await   patch_nwjs_codecs(await findpath(), version);
-    }
-    temp_nwjs = path.join(temp_folder, "node_modules/nw/nwjs");
+  if (process.env.NWJS_FFMPEG === "PATCH") {
+    await patch_nwjs_codecs(await nw.findpath(), version);
   }
+  const temp_nwjs = path.join(
+    temp_folder, "node_modules/nw",
+    (await nw.findpath()).split("node_modules/nw/")[1].split("/")[0]);
+
 
   if (fs.existsSync(package_directory)) {
     await fs.promises.rm(package_directory, { recursive: true, force: true })
