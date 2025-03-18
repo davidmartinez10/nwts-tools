@@ -60,9 +60,10 @@ async function nwts_package() {
   if (process.env.NWJS_FFMPEG === "PATCH") {
     await patch_nwjs_codecs(await nw.findpath(), version);
   }
-  const temp_nwjs = path.join(
-    temp_folder, "node_modules/nw",
-    (await nw.findpath()).split("node_modules/nw/")[1].split("/")[0]);
+  const temp_nwjs = path.join(temp_folder, "node_modules/nw",
+                              (await nw.findpath())
+                                .split(path.join("node_modules", "nw"))[1]
+                                .split(path.sep)[1]);
 
 
   if (fs.existsSync(package_directory)) {
