@@ -61,8 +61,8 @@ async function nwts_package() {
     await fs.promises.unlink("./nwjs").catch(Boolean);
     //@ts-ignore
     await nw.get({
-      version,
-      flavor: "normal",
+      version: semver.coerce(version)?.version || "latest",
+      flavor: version.includes("sdk") ? "sdk" : "normal",
       //@ts-ignore
       platform: os_map[os.platform()],
       arch: os.arch(),
