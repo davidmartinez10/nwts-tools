@@ -41,15 +41,36 @@ Used mainly for builing the application, launching it and attaching the debugger
 npx nwts-run
 ```
 
+### Generate manifest from TS
+```typescript
+import fs from "node:fs";
+import { NWJSManifest } from "nwts-tools/lib/types/nwjs_manifest";
+
+const manifest: NWJSManifest = {
+  name: "app",
+  main: "index.html",
+  window: {
+    width: 240,
+    height: 45,
+    position: "center",
+    resizable: false
+  },
+  "chromium-args": "--force-dark-mode --disable-raf-throttling"
+};
+
+await fs.promises.writeFile("package.json", JSON.stringify(manifest));
+```
+
+
 ### Typed Node.js built-in modules
 In NW.js you can import Node.js built-in modules with the `nw.require()` function, whose return type is `any`. Here is provided a collection of typed exports from Node.js builtin modules. Some examples:
 ```typescript
-import util from "nwts-tools/node/util";
-import fs from "nwts-tools/node/fs";
-import child_process, { promises } from "nwts-tools/node/child_process";
-import http from "nwts-tools/node/http";
-import os from "nwts-tools/node/os";
-import path from "nwts-tools/node/path";
+import util from "nwts-tools/lib/node/util";
+import fs from "nwts-tools/lib/node/fs";
+import child_process, { promises } from "nwts-tools/lib/node/child_process";
+import http from "nwts-tools/lib/node/http";
+import os from "nwts-tools/lib/node/os";
+import path from "nwts-tools/lib/node/path";
 ```
 
 # Dependencies

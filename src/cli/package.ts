@@ -25,11 +25,12 @@ async function nwts_package() {
     await fs.promises.readFile(path.join(process.cwd(), "package.json"),
                                { encoding: "utf8" }));
 
-  let   application_name = process.env.APP_NAME || displayName;
-  const version          = process.env.NWJS_VERSION
-                  || (dependencies?.nw || devDependencies?.nw)
-                       .replace("^", "")
-                       .replace("-sdk", "");
+  let application_name = process.env.APP_NAME || displayName;
+  const [major = 0, minor = 0, patch = 0]
+    = (dependencies?.nw || devDependencies?.nw)
+        .split("")
+        .filter(function(e: string) { return Number(e) >= 0 });
+  const version = process.env.NWJS_VERSION || [major, minor, patch].join(".");
 
   const config = {
     "Application name": application_name,
@@ -95,9 +96,8 @@ async function nwts_package() {
   case "win32": {
     const app_directory = path.join(".", package_directory, application_name);
 
-    await proper_spawn(
-      `Robocopy ${escape_path(temp_nwjs)} ${
-        escape_path(app_directory)} *.* /E /MOVE`);
+    await proper_spawn(`Robocopy ${escape_path(temp_nwjs)} ${
+      escape_path(app_directory)} *.* /E /MOVE`);
 
     if (process.env.PACKAGE_TYPE === "plain") {
       await proper_spawn(`Robocopy ${escape_path(build_directory)} ${
@@ -186,9 +186,8 @@ async function nwts_package() {
   }
 
   case "darwin": {
-    await proper_spawn(
-      `mv ${escape_path(temp_nwjs, "nwjs.app")} ${
-        escape_path(package_directory, application_name + ".app")}`);
+    await proper_spawn(`mv ${escape_path(temp_nwjs, "nwjs.app")} ${
+      escape_path(package_directory, application_name + ".app")}`);
 
     const resources
       = `${package_directory}/${application_name}.app/Contents/Resources`;
@@ -205,9 +204,8 @@ async function nwts_package() {
   }
 
   case "linux": {
-    await proper_spawn(
-      `mv ${escape_path(temp_nwjs)} ${
-        escape_path(package_directory, application_name)}`);
+    await proper_spawn(`mv ${escape_path(temp_nwjs)} ${
+      escape_path(package_directory, application_name)}`);
 
     if (process.env.PACKAGE_TYPE === "plain") {
       await proper_spawn(`cp -R ${escape_path(build_directory)} ${
