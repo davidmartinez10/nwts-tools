@@ -11,7 +11,9 @@ import {escape_path, proper_spawn} from "../lib/proper-spawn";
 async function nwts_package() {
 
   console.clear();
-  console.info("nwts-package\n");
+  console.log("\x1b[32m" +
+              "nwts-package" +
+              "\n\x1b[0m");
 
   if (! process.env.PACKAGE_TYPE
       || ! ["zip", "zip+exe"].includes(process.env.PACKAGE_TYPE)) {
@@ -30,7 +32,7 @@ async function nwts_package() {
   let application_name = process.env.APP_NAME || displayName;
 
   const version
-    = process.env.NWJS_VERSION
+    = semver.valid(process.env.NWJS_VERSION)
       || semver.coerce(dependencies?.nw || devDependencies?.nw)!.version;
 
   const config = {
@@ -42,7 +44,7 @@ async function nwts_package() {
     "Package type": process.env.PACKAGE_TYPE,
   };
 
-  console.info("Running on these settings:");
+  console.log("Running on these settings:");
   console.table(config);
 
   let temp_nwjs = "";
@@ -83,7 +85,7 @@ async function nwts_package() {
       = await import(os.platform() === "win32" ? `file:///${absolute_path}`
                                                : absolute_path) as
         typeof import("nw");
-      await   patch_nwjs_codecs(findpath());
+      await   patch_nwjs_codecs(findpath(), version);
     }
     temp_nwjs = path.join(temp_folder, "node_modules/nw/nwjs");
   }
@@ -237,7 +239,7 @@ async function nwts_package() {
 
 nwts_package()
   .then(function onfulfilled() {
-    console.log("The entire program was compiled succesfully.");
+    console.log("The entire program was packaged succesfully.");
     process.exit(0);
   })
   .catch(function onrejected(reason) {

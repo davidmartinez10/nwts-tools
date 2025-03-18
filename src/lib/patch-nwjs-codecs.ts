@@ -10,12 +10,14 @@ import {escape_path, proper_spawn} from "./proper-spawn";
 
 // IMPORTANT: Take a look at https://www.ffmpeg.org/legal.html.
 
-export async function patch_nwjs_codecs(nw_path: string) {
+export async function patch_nwjs_codecs(nw_path: string, version?: string) {
   const { got }                           = await import("got");
   const { dependencies, devDependencies } = JSON.parse(String(
     await fs.promises.readFile(path.join(process.cwd(), "package.json"))));
 
-  const { version } = semver.coerce(dependencies?.nw || devDependencies?.nw)!;
+  if (! version || ! semver.valid(version)) {
+    version = semver.coerce(dependencies?.nw || devDependencies?.nw)!.version;
+  }
 
   const os_map = {
     win32: "win",
