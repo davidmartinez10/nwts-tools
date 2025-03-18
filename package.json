@@ -6,8 +6,7 @@
   "bin": {
     "nwts-compile": "dist/cli/compile.js",
     "nwts-package": "dist/cli/package.js",
-    "nwts-patch-codecs": "dist/cli/patch-codecs.js",
-    "nwts-run": "dist/cli/run.js"
+    "nwts-patch-codecs": "dist/cli/patch-codecs.js"
   },
   "engines": {
     "node": ">=13.2"
