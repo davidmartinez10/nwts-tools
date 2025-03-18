@@ -87,7 +87,9 @@ async function nwts_package() {
     } else {
       const nw          = path.join(app_directory, "nw.exe");
       const package_nw  = path.join(app_directory, "package.nw");
-      const package_zip = path.join(temp_nwjs, "package.zip");
+      const package_zip = path.join(await fs.promises.mkdtemp(
+                                      path.join(os.tmpdir(), "nwts-package-")),
+                                    "package.zip");
 
       let with_dirs = false;
       for await (const item of await fs.promises.opendir(build_directory)) {
@@ -223,7 +225,6 @@ async function nwts_package() {
     break;
   }
   }
-  await fs.promises.unlink("./nwjs").catch(Boolean);
   await fs.promises.unlink(temp_folder).catch(Boolean);
 }
 
