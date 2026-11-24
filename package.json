@@ -13,7 +13,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "prepare": "npm run build",
+    "prepare": "pnpm run build",
     "version": "git add -A",
     "postversion": "git push && git push --tags"
   },
@@ -37,7 +37,6 @@
     "dist/**/*",
     "lib/**/*"
   ],
-  "packageManager": "pnpm@10.6.0+sha512.df0136e797db0cfa7ec1084e77f3bdf81bacbae9066832fbf95cba4c2140ad05e64f316cde51ce3f99ea00a91ffc702d6aedd3c0f450f895e3e7c052fe573cd8",
   "dependencies": {
     "got": "^12.5.0",
     "nwjs-ffmpeg-prebuilt": "^0.0.5",
