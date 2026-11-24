@@ -1,13 +1,19 @@
+import {ChildProcess} from "child_process";
 import child_process from "child_process";
 import os from "os";
 import path from "path";
 
-export function proper_spawn(command: string, cwd = process.cwd(),
-                             shell = os.platform() === "win32" ? "powershell"
-                                                               : "bash") {
-  console.log(`\n$ \x1b[33m${command}\x1b[0m\n`);
+export type ProperChildProcess
+  = Promise<{stdout: string, stderr: string}>&{child: ChildProcess};
+
+export function proper_exec(command: string, cwd = process.cwd(),
+                            shell = os.platform() === "win32" ? "powershell"
+                                                              : "bash") {
 
   const [cmd, ...args] = command.replaceAll("\\ ", "\n").split(" ");
+  const basename       = cmd.match(/^.*?[\\/]([^\\/]+)$/)?.[1] || cmd;
+  console.info(`$ \x1b[33m${basename} ${args.join(" ")}\x1b[0m`);
+
 
   const child
     = child_process.spawn(cmd,
@@ -17,22 +23,47 @@ export function proper_spawn(command: string, cwd = process.cwd(),
                             shell,
                             cwd,
                             env: process.env,
-                            stdio: "inherit",
+                            // [stdin, stdout, stderr, extra]
+                            stdio: ["pipe", "pipe", "pipe"],
                           });
 
-  const p
-    = new Promise(function(resolve, reject) { child.on("close", resolve); }) as
-        Promise<void>
-      & { kill(): Boolean };
 
-  p.kill = function() {
-    if (! child.kill()) {
-      if (child.pid) { return process.kill(child.pid); }
-    }
-    return true;
-  };
+  let stdout = "";
+  child.stdout?.on("data", function(chunk) { stdout += chunk.toString(); });
 
-  return p;
+  let stderr = "";
+  child.stderr?.on("data", function(chunk) { stderr += chunk.toString(); });
+
+  const promise
+    = new Promise<{ stdout: string, stderr: string }>(function(resolve,
+                                                               reject) {
+        child.on("close", (code) => { resolve({ stdout, stderr }); });
+      }) as ProperChildProcess;
+
+  promise.child = child;
+
+
+  return promise;
+}
+
+export function proper_spawn(command: string, cwd = process.cwd(),
+                             shell = os.platform() === "win32" ? "powershell"
+                                                               : "bash") {
+
+  const [cmd, ...args] = command.replaceAll("\\ ", "\n").split(" ");
+  const basename       = cmd.match(/^.*?[\\/]([^\\/]+)$/)?.[1] || cmd;
+  console.info(`$ \x1b[33m${basename} ${args.join(" ")}\x1b[0m`);
+
+  return child_process.spawn(cmd,
+                             args.map(function callbackfn(
+                               value) { return value.replaceAll("\n", " "); }),
+                             {
+                               shell,
+                               cwd,
+                               env: process.env,
+                               // [stdin, stdout, stderr, extra]
+                               stdio: ["pipe", "pipe", "pipe"],
+                             });
 }
 
 export function escape_path(...paths: string[]) {

@@ -39,8 +39,8 @@ export async function patch_nwjs_codecs(nw_path: string, version?: string) {
 
   switch (os.platform()) {
   case "darwin":
-    nw_path    = nw_path.replace("MacOS/nwjs",
-                                 "Frameworks/nwjs Framework.framework/Versions");
+    nw_path = nw_path.replace("MacOS/nwjs",
+                              "Frameworks/nwjs Framework.framework/Versions");
     const stat = await fs.promises.lstat(path.join(nw_path, "Current"));
     if (stat.isSymbolicLink()) {
       nw_path += "/Current";
@@ -52,7 +52,11 @@ export async function patch_nwjs_codecs(nw_path: string, version?: string) {
     }
     break;
   case "win32": nw_path = nw_path.replace("nw.exe", ""); break;
-  case "linux": nw_path = nw_path.replace("nw/nwjs/nw", "nw/nwjs/lib"); break;
+  case "linux":
+    const parts             = nw_path.split("/");
+    parts[parts.length - 1] = "lib";
+    nw_path                 = parts.join("/");
+    break;
   }
 
   await proper_spawn(
